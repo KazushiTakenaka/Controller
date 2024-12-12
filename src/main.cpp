@@ -103,8 +103,7 @@ SendData dataLoading();
 
 void loop() {
   /*電池残用読み込み*/
-  // battery_value = getVoltage();
-  battery_value = 1.0;
+  battery_value = getVoltage();
   /*構造体に送信情報を代入*/
   SendData sendData;
   sendData = dataLoading();
