@@ -26,14 +26,18 @@ const int SLD_SW3_2 = 5;
 const int SLD_SW4_1 = 23;
 const int SLD_SW4_2 = 19;
 const int BLE_LED = 21;
+const int BATTERY = 35;
 bool connected;
 uint8_t myMacAddress[6];
 
 // スライドボリューム値読み取りピン
 const int ANALOG_READ1 = 12;
 const int ANALOG_READ2 = 13;
+//BUTTRY電圧確認用
+float battery_value = 0;
 
 /*関数宣言*/
+float getVoltage();
 
 void setup() {
   Serial.begin(115200);
@@ -67,6 +71,7 @@ void setup() {
 
 int receivedData;// 受信データ
 int i;
+int j = 0;
 /*アナログ読み取り変数*/
 int slideVal1;
 int slideVal2;
@@ -97,6 +102,9 @@ struct SendData
 SendData dataLoading();
 
 void loop() {
+  /*電池残用読み込み*/
+  // battery_value = getVoltage();
+  battery_value = 1.0;
   /*構造体に送信情報を代入*/
   SendData sendData;
   sendData = dataLoading();
@@ -104,11 +112,26 @@ void loop() {
 
   /*通信途切れで再起動*/
   if (SerialBT.available()) {
-    digitalWrite(BLE_LED, HIGH);
-    Serial.println("conect");
+    /*バッテリー残量確認
+     残量小のときLED点滅*/
+    if (battery_value <= 1.6){
+      j++;
+      if (j <= 25){
+        Serial.print("1:");
+        digitalWrite(BLE_LED, LOW);
+      }else if (j >= 26 && j <= 49){
+        Serial.print("2:");
+        digitalWrite(BLE_LED, HIGH);
+      }else if (j >= 50){
+        j = 0;
+      }
+    }else if (battery_value > 1.6){
+      digitalWrite(BLE_LED, HIGH);
+    }
+
     receivedData = SerialBT.read();
     i = receivedData;
-  }else{
+  }else {
     i++;
     digitalWrite(BLE_LED, LOW);
     // if (i >= 20){
@@ -147,7 +170,7 @@ SendData dataLoading() {
   readDatas.sw6 = digitalRead(SW6);
   readDatas.sw7 = digitalRead(SW7);
   readDatas.sw8 = digitalRead(SW8);
-  #if 1
+  #if 0
   Serial.print(readDatas.sld_sw1_1);
   Serial.print(readDatas.sld_sw1_2);
   Serial.print(readDatas.sld_sw2_1);
@@ -168,4 +191,15 @@ SendData dataLoading() {
   Serial.println(readDatas.slideVal2);
   #endif
   return readDatas;
+}
+
+// 電源電圧を取得する関数
+float getVoltage() {
+  // ADCで値を読み取る
+  int adc_value = analogRead(BATTERY);
+
+  // 電圧を計算
+  float voltage = adc_value * (3.3 / 4096);
+
+  return voltage;
 }
