@@ -196,9 +196,15 @@ SendData dataLoading() {
 float getVoltage() {
   // ADCで値を読み取る
   int adc_value = analogRead(BATTERY);
+  const float R1 = 1000;
+  const float R2 = 1000;
 
   // 電圧を計算
-  float voltage = adc_value * (3.3 / 4096);
+  float voltage = adc_value * 3.3 / 4095.0 * (R1 + R2) / R2;
+
+  // Serial.print(adc_value);
+  // Serial.print("  ");
+  // Serial.println(voltage);
 
   return voltage;
 }
